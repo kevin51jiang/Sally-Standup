@@ -22,7 +22,7 @@ if (!slackSigningSecret || !slackAccessToken) {
 /////////////////////////////
 // SELF DEFINED CONSTANTS //
 ////////////////////////////
-const categories = ["todo", "finished", "blocker"];
+const categories = Object.keys(dict.stages)
 
 const slackInteractions = createMessageAdapter(slackSigningSecret);
 const web = new WebClient(slackAccessToken);

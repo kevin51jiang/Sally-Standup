@@ -1,48 +1,60 @@
-# Express All Interactions Example
+# Sally Standup [![Devpost | Sally Standup](https://badges.devpost-shields.com/get-badge?name=Sally%20Standup&id=sally-standup&type=custom-color&style=for-the-badge)](https://devpost.com/software/sally-standup)
+> Daily standups - without the memory leaks.
 
-This example shows a fully functioning app using the
-[Slack Interactive Messages](https://github.com/slackapi/node-slack-interactive-messages) package.
+![Sample usage](https://challengepost-s3-challengepost.netdna-ssl.com/photos/production/software_photos/001/157/707/datas/gallery.jpg)
 
-## Setup
+## Inspiration
+I've realized that way too much of my time at work is dedicated to just remembering what I did yesterday, only to forget and spend 5 minutes scrolling up until I see the standup I did yesterday and  copy it word for word.
 
-### Create a Slack app
+Sally Standup solves this problem by having a place where you can send tasks that you've done, or stuff that you need to do.
 
-1. Create an app at <https://api.slack.com/apps> (don't close this window, you'll need it later).
+Then, when it's time for your standup, all you need is a quick `/sally standup` that shows what you've done yesterday, all presented in a clear manner.
 
-### Run the code
 
-1. Choose where you want to run:
-  *  Either clone this repo, navigate to this directory, and run `npm install`
-  *  Or, <a href="https://glitch.com/edit/#!/remix/slack-express-all-interactions-example"><img src="https://cdn.glitch.com/2bdfb3f8-05ef-4035-a06e-2043962a3a13%2Fremix%402x.png?1513093958726" alt="remix button" aria-label="remix" height="33"></a>
+## How to use
 
-2. Set the following environment variables
-  *  `SLACK_SIGNING_SECRET`: Available on your app's _Basic Information_ page in Slack.
-  *  `SLACK_ACCESS_TOKEN`: Available on your app's _Install App_ page in Slack (after installing on your Development Workspace).
-  *  `PORT`: _ONLY_ if you are running locally
+### Installation 
 
-3. _ONLY_ If you're running the app locally:
-  *  Make sure you're on a supported version of node (see `.nvmrc` or if you have nvm run `nvm use`)
-  *  Start the app (`npm start`)
-  *  In another terminal window, start ngrok on the same port as the webserver (`ngrok http $PORT`)
+`git clone` then `npm install`. After that fill out your own .env using the template provided in `.env.sample`. Then, use `npm start` to start the program.
 
-### Enable Interactive Components
+### Commands
 
-1. Open your app's _Interactive Components_ page in Slack.
-2. Enable interactive components and enter the Request URL and Options URL (use the same URL for both)
-  *  ngrok URL or Glitch URL + '/slack/actions'
+`sally standup`: Displays your current todos/done/blockers, then deletes your completed and blockers.
 
-### Create a Slash Command
+`sally add <string>`: Use it anytime, anywhere. Whenever you get assigned a new item, wheever a meeting happens, it doesn't matter. One quick line will add a todo to the bot. 
 
-1. Open your app's _Slash Commands_ page in Slack.
-2. Click "Create New Command"
-  *  In command use: `/interactive-example`
-  *  In request URL use: ngrok URL or Glitch URL + `/slack/commands`
-  *  Click Save
-3. On the _Install App_ page, reinstall in your Development Workspace.
+`sally finish`: Choose to send one f your predefined messages and move it to the finished list.
 
-## Usage
+`sally blocker <string>`: Adds a blocker to the list
 
-The slash command can be triggered in three ways:
-*  `/interactive-example button`: Creates a message with message butons. When you click one, the message updates.
-*  `/interactive-example menu`: Creates a message with a dynamic menu. When you begin typing, the options are narrowed down. Selecting an option updates the message.
-*  `/interactive-exmaple dialog`: Creates a dialog with a user menu input and text input. Sends a confirmation message after submission.
+`sally list`: View the current status of all your lists
+
+`sally clear`: Clears all your records.
+
+## How I built it
+
+NodeJS and the [Slack SDK](https://github.com/slackapi/node-slack-sdk/) were a great help.
+
+Persistence built in by `node-json-db`.
+
+## Challenges I ran into
+
+Setting up the slack environment was challenging, requiring ngrok even for local development.  Many small errors were made with the structure for the interactive elements for Slack as well, sucking up a lot of time.
+
+## Accomplishments that I'm proud of
+Assuming it saves 2 minutes/person/day, at a company at around 500 employees,
+This gives 1000min saved/day.
+
+In 2020, there are 252 working days, meaning that it saves 4200 hours/year.
+
+Assuming pay of $25/hr, this saves $105 000/year! In other words,  a *lot* of turnips.
+
+Also - since it's on Slack, I guess you can call this responsive design?
+
+## What I learned
+
+First time I've made a NodeJS application without being destroyed by race conditions/promises/etc. Yay!
+
+## What's next for Sally Standup
+
+Integrations! Especially Outlook Calendar for having a line for saying `[x] hours of meetings scheduled today`. However, had some problems with signing up for MS auth so will hopefully fix that soon.
