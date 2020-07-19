@@ -1,0 +1,22 @@
+{
+  "name": "@slack/express-all-interactions",
+  "private": true,
+  "description": "An example of using Slack Interactive Messages for Node",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon -r dotenv/config server --config ./nodemon.json",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "author": "Ankur Oberoi <aoberoi@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@slack/interactive-messages": "^1.1.1",
+    "@slack/web-api": "^5.0.0",
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.2",
+    "dotenv": "^5.0.1",
+    "express": "^4.16.3",
+    "fuse.js": "^6.4.0",
+    "node-json-db": "^1.1.0"
+  }
+}
