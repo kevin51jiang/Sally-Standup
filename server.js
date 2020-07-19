@@ -251,6 +251,8 @@ function slackSlashCommand(req, res, next) {
       };
       response.attachments[0].blocks[0].accessory.options = todoOpts.fields;
 
+
+      console.log('newresp', JSON.stringify(response))
       res.json(response);
     } else if (type === "standup") {
       // SEND STANDUP
@@ -435,7 +437,7 @@ const getTodoOpts = (userId) => {
       const todo = db.getData(`/${userId}/todo[${i}]`);
       return {
         text: {
-          type: "plain_text",
+          type: "mrkdwn",
           text: todo,
           emoji: true,
         },
@@ -443,6 +445,8 @@ const getTodoOpts = (userId) => {
       };
     }),
   };
+
+  console.log('returnable', returnable)
   return returnable;
 };
 

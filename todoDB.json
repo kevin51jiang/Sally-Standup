@@ -1,7 +1,17 @@
 {
-    "U017HRAQE12": {
-        "todo": [
-            "Refactor code"
-        ]
-    }
+  "U017HRAQE12": {
+    "todo": [
+      ":rocket: Do hackathon",
+      ":mask: Don't go near people",
+      ":eyes: Take a walk",
+      ":mailbox: Send email to Jim from accounting",
+      ":snow_capped_mountain: Patch holes in igloo"
+    ],
+    "finished": [
+      ":computer: Break prod",
+      ":art: Change the highlight color of text to something slightly off to bother the designers"
+    ],
+
+    "blocker": ["Canada Geese", "Maple syrup shortaage"]
+  }
 }
