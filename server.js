@@ -8,7 +8,7 @@ const bodyParser = require("body-parser");
 var JsonDB = require("node-json-db").JsonDB;
 var Config = require("node-json-db/dist/lib/JsonDBConfig").Config;
 const utils = require("./utils");
-
+const dict = require("./dict");
 const db = new JsonDB(new Config("todoDB", true, true, "/"));
 
 // Read the signing secret and access token from the environment variables
@@ -48,83 +48,6 @@ http.createServer(app).listen(port, () => {
   console.log(`server listening on port ${port}`);
 });
 
-// slackInteractions
-//   .options(
-//     { callbackId: "pick_sf_neighborhood", within: "interactive_message" },
-//     (payload) => {
-//       console.log(
-//         `The user ${payload.user.name} in team ${payload.team.domain} has requested options`
-//       );
-
-//       // Gather possible completions using the user's input
-//       return (
-//         neighborhoods
-//           .fuzzyFind(payload.value)
-//           // Format the data as a list of options
-//           .then(formatNeighborhoodsAsOptions)
-//           .catch((error) => {
-//             console.error(error);
-//             return { options: [] };
-//           })
-//       );
-//     }
-//   )
-//   .action("pick_sf_neighborhood", (payload, respond) => {
-//     console.log(
-//       `The user ${payload.user.name} in team ${payload.team.domain} selected from a menu`
-//     );
-
-//     // Use the data model to persist the action
-//     neighborhoods
-//       .find(payload.actions[0].selected_options[0].value)
-//       // After the asynchronous work is done, call `respond()` with a message object to update the
-//       // message.
-//       .then((neighborhood) => {
-//         respond({
-//           text: payload.original_message.text,
-//           attachments: [
-//             {
-//               title: neighborhood.name,
-//               title_link: neighborhood.link,
-//               text: "One of the most interesting neighborhoods in the city.",
-//             },
-//           ],
-//         });
-//       })
-//       .catch((error) => {
-//         // Handle errors
-//         console.error(error);
-//         respond({
-//           text: "An error occurred while finding the neighborhood.",
-//         });
-//       });
-
-//     // Before the work completes, return a message object that is the same as the original but with
-//     // the interactive elements removed.
-//     const reply = payload.original_message;
-//     delete reply.attachments[0].actions;
-//     return reply;
-//   });
-
-// const pick_sf_neighborhood = {
-//   text: "San Francisco is a diverse city with many different neighborhoods.",
-//   response_type: "in_channel",
-//   attachments: [
-//     {
-//       text: "Explore San Francisco",
-//       callback_id: "pick_sf_neighborhood",
-//       actions: [
-//         {
-//           name: "neighborhood",
-//           text: "Choose a neighborhood",
-//           type: "select",
-//           data_source: "external",
-//         },
-//       ],
-//     },
-//   ],
-// };
-
 // Example of handling static select (a type of block action)
 slackInteractions.action(
   {
@@ -135,16 +58,22 @@ slackInteractions.action(
       const userId = payload.user.id;
       const selectedOpt = payload.actions[0].selected_option.value;
 
-      let numberOfElement = db.count(`/${userId}/todo`);
+      let numberOfElement = db.count(`/${userId}/${dict.stages.todo.path}`);
       console.log("numberOfElement", numberOfElement);
 
       const status = [...Array(numberOfElement)].forEach((_, i) => {
-        const todoAt = db.getData(`/${userId}/todo[${[i]}]`);
+        const todoAt = db.getData(
+          `/${userId}/${dict.stages.todo.path}[${[i]}]`
+        );
         console.log("comparing ", todoAt, selectedOpt);
         if (todoAt === selectedOpt) {
           //create first, then delete
-          db.push(`/${userId}/finished[]`, selectedOpt, true);
-          db.delete(`/${userId}/todo[${i}]`); // delete second
+          db.push(
+            `/${userId}/${dict.stages.finished.path}[]`,
+            selectedOpt,
+            true
+          );
+          db.delete(`/${userId}/${dict.stages.todo.path}[${i}]`); // delete second
           respond({
             text: `_"${selectedOpt}"_ has been moved to the finished list.`,
           });
@@ -239,46 +168,39 @@ function slackSlashCommand(req, res, next) {
   if (req.body.command === "/sally") {
     const type = req.body.text.split(" ")[0];
     console.log("Got request: ", req.body.text);
+    let response;
     if (type === "add" || type === "create") {
       // CREATE NEW TODO
-      const response = addAttrib(req.body, "todo");
-      res.json(response);
+      response = addAttrib(req.body, "todo");
     } else if (type === "finish" || type === "fin" || type === "done") {
       // END NEW TODO
       const todoOpts = getTodoOpts(req.body.user_id);
-      const response = {
+      let response = {
         ...pickTaskToFinish,
       };
       response.attachments[0].blocks[0].accessory.options = todoOpts.fields;
-
-
-      console.log('newresp', JSON.stringify(response))
-      res.json(response);
     } else if (type === "standup") {
       // SEND STANDUP
-      const response = standup(req.body);
-      res.json(response);
+      response = standup(req.body);
       //clean up finished and blockers
       db.delete(`/${req.body.user_id}/finished`);
       db.delete(`/${req.body.user_id}/blocker`);
     } else if (type === "list" || type === "display") {
       // LIST CURRENT TASKS
-      const response = display(req.body.user_id);
-      res.json(response);
+      response = display(req.body.user_id);
     } else if (type === "blocker") {
       // ADD BLOCKER
-      const response = addAttrib(req.body, "blocker", true);
-      res.json(response);
+      response = addAttrib(req.body, "blocker", true);
     } else if (type === "clear") {
       // CLEAR ALL TODOS
-      const response = clearTodos(req.body.user_id);
-      res.json(response);
+      response = clearTodos(req.body.user_id);
     } else {
       // Help
       res.send(
         "Use this command followed by `add <string>`, `blocker`, or `finish` to move tasks around. Use `list` or `standup` to view the current status. Note: `standup` removes finished tasks."
       );
     }
+    res.json(response);
   } else {
     next();
   }
@@ -368,18 +290,19 @@ const display = (userId) => {
     blocks.push(title);
 
     blocks = categories.reduce((acc, category) => {
+      let catBlock;
       const catTitle = {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${utils.capitalizeString(category)}*`,
+          text: `*${dict.stages[category].disp}*`,
         },
       };
-      let catBlock;
+
       try {
         catBlock = getBlockFrom(userId, category);
 
-        if (category === "finished") {
+        if (category === dict.stages.finished.path) {
           catBlock.fields = catBlock.fields.map((field) => {
             return {
               ...field,
@@ -390,10 +313,12 @@ const display = (userId) => {
       } catch (err) {
         catBlock = {
           type: "section",
-          fields: [{
-            type: "plain_text",
-            text: "Empty!",
-          }],
+          fields: [
+            {
+              type: "plain_text",
+              text: "Empty!",
+            },
+          ],
         };
       }
 
@@ -430,11 +355,11 @@ const clearTodos = (userId) => {
 };
 
 const getTodoOpts = (userId) => {
-  let numberOfElement = db.count(`/${userId}/todo`);
+  let numberOfElement = db.count(`/${userId}/${dict.stages.todo.path}`);
 
   const returnable = {
     fields: [...Array(numberOfElement)].map((_, i) => {
-      const todo = db.getData(`/${userId}/todo[${i}]`);
+      const todo = db.getData(`/${userId}/${dict.stages.todo.path}[${i}]`);
       return {
         text: {
           type: "mrkdwn",
@@ -446,22 +371,5 @@ const getTodoOpts = (userId) => {
     }),
   };
 
-  console.log('returnable', returnable)
   return returnable;
 };
-
-// Helpers
-function validateKudosSubmission(submission) {
-  let errors = [];
-  if (!submission.comment.trim()) {
-    errors.push({
-      name: "comment",
-      error: "The comment cannot be empty",
-    });
-  }
-  if (errors.length > 0) {
-    return {
-      errors,
-    };
-  }
-}
