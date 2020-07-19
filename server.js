@@ -8,6 +8,7 @@ const bodyParser = require("body-parser");
 var JsonDB = require("node-json-db").JsonDB;
 var Config = require("node-json-db/dist/lib/JsonDBConfig").Config;
 const fuse = require("fuse.js");
+const utils = require('./utils');
 
 const db = new JsonDB(new Config("todoDB", true, true, "/"));
 
@@ -19,11 +20,14 @@ if (!slackSigningSecret || !slackAccessToken) {
     "A Slack signing secret and access token are required to run this app."
   );
 }
+///////////////////////////// 
+// SELF DEFINED CONSTANTS //
+////////////////////////////
+const categories = ["todo", "finished", "blocker"];
 
-// Create the adapter using the app's signing secret
+
+
 const slackInteractions = createMessageAdapter(slackSigningSecret);
-
-// Create a Slack Web API client using the access token
 const web = new WebClient(slackAccessToken);
 
 // Initialize an Express application
@@ -271,7 +275,8 @@ function slackSlashCommand(req, res, next) {
       res.json(response);
     } else if (type === "list" || type === "display") {
       // LIST CURRENT TASKS
-      res.send();
+      const response = display(req.body.user_id)
+      res.json(response);
     } else if (type === "blocker") {
       // ADD BLOCKER
       const response = addAttrib(req.body, "blocker", true);
@@ -303,6 +308,8 @@ const addAttrib = (body, attrib, inChannel = false) => {
     if (inChannel) {
       message.response_type = "in_channel";
     }
+
+    return message;
   } catch (error) {
     return {
       text: `<@${body.user_id}>, your ${attrib} has NOT been added. Please try again.`,
@@ -316,8 +323,46 @@ const addAttrib = (body, attrib, inChannel = false) => {
  */
 const standup = (body) => {
   try {
-    const categories = ["todo", "finished", "blocker"];
     const userId = body.user_id;
+    const now = new Date();
+    const title = {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": `*<@${userId}>'s standup for ${now.toDateString()}*`
+      }
+    }
+
+    const standupResults = display(userId);
+    standupResults[0] = title; // update title for daily standup
+
+    return standupResults;
+  } catch (err) {
+    console.log(err);
+    return {
+      text: `<@${body.user_id}>, your standup has failed due to ${err}. Please try again.`,
+    };
+  }
+};
+
+const getBlockFrom = (userId, attrib) => {
+  // const bullet = "•";
+  let numberOfElement = db.count(`/${userId}/${attrib}`);
+
+  const returnable = {
+    type: "section",
+    fields: [...Array(numberOfElement)].map((_, i) => {
+      return {
+        "type": 'mrkdwn',
+        text: db.getData(`/${userId}/${attrib}[${i}]`)
+      }
+    })
+  };
+  return returnable;
+};
+
+const display = (userId) => {
+  try {
     const now = new Date();
     const divider = {
       type: "divider",
@@ -328,7 +373,7 @@ const standup = (body) => {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": `*<@${userId}>'s standup for ${now.toDateString()}*`
+        "text": `*<@${userId}>'s current status for ${now.toDateString()}*`
       }
     }
 
@@ -339,55 +384,31 @@ const standup = (body) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${category}*`,
+          text: `*${utils.capitalizeString(category)}*`,
         },
       };
-      acc.push(catTitle, getBlockFrom(userId, category), divider);
+      const catBlock = getBlockFrom(userId, category)
+
+      if (category === 'finished') {
+        catBlock.fields = catBlock.fields.map((field) => {
+          return {
+            ...field,
+            text: `~${field.text}~`
+          }
+        })
+      }
+
+      acc.push(catTitle, catBlock, divider);
       return acc;
     }, blocks);
 
-    let returnable = {
-
+    let displayResults = {
       response_type: "in_channel",
       blocks: blocks
     };
 
+    return displayResults;
 
-
-    console.log("returnable.blocks", returnable.blocks);
-
-    return returnable;
-  } catch (err) {
-    console.log(err);
-    return {
-      text: `<@${body.user_id}>, your standup has failed due to ${err}. Please try again.`,
-    };
-  }
-};
-
-const getBlockFrom = (userId, attrib) => {
-  const bullet = "•";
-  let numberOfElement = db.count(`/${userId}/${attrib}`);
-
-  const returnable = {
-    type: "section",
-    text: {
-      text: [...Array(numberOfElement)].reduce((acc, _, i) => {
-        return (
-          acc +
-          bullet +
-          db.getData(`/${userId}/${attrib}[${i}]`) +
-          "\n"
-        );
-      }, ""),
-      type: "mrkdwn",
-    },
-  };
-  return returnable;
-};
-
-const display = (userId) => {
-  try {
   } catch (err) {
     return {
       text: `<@${userId}>, your standup has failed due to ${err}. Please try again.`,
@@ -397,6 +418,8 @@ const display = (userId) => {
 
 const finishTodo = (body) => {
   try {
+    const userId = body.user_id
+    db.getIndex(`/${userId}/todo/`)
   } catch (err) {
     return {
       text: `<@${body.user_id}>, your standup has failed due to ${err}. Please try again.`,
