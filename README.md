@@ -1,15 +1,20 @@
 # Sally Standup [![Devpost | Sally Standup](https://badges.devpost-shields.com/get-badge?name=Sally%20Standup&id=sally-standup&type=custom-color&style=for-the-badge)](https://devpost.com/software/sally-standup)
 > Daily standups - without the memory leaks.
 
-![Sample usage](https://challengepost-s3-challengepost.netdna-ssl.com/photos/production/software_photos/001/157/707/datas/gallery.jpg)
+![Using Sally Screenshot](https://challengepost-s3-challengepost.netdna-ssl.com/photos/production/software_photos/001/157/707/datas/gallery.jpg)
+
+*Built using*: NodeJS and Slack Block Kit
 
 ## Inspiration
-I've realized that way too much of my time at work is dedicated to just remembering what I did yesterday, only to forget and spend 5 minutes scrolling up until I see the standup I did yesterday and  copy it word for word.
+I've realized that way too much of my time at work is dedicated to just remembering what I did yesterday, only to forget and spend 5 minutes scrolling up until I see the standup I did yesterday and copy it word for word.
+
+This process happened every day until something just clicked. Isn't that why we have computers?
+
+## What it does
 
 Sally Standup solves this problem by having a place where you can send tasks that you've done, or stuff that you need to do.
 
 Then, when it's time for your standup, all you need is a quick `/sally standup` that shows what you've done yesterday, all presented in a clear manner.
-
 
 ## How to use
 
@@ -47,7 +52,9 @@ This gives 1000min saved/day.
 
 In 2020, there are 252 working days, meaning that it saves 4200 hours/year.
 
-Assuming pay of $25/hr, this saves $105 000/year! In other words,  a *lot* of turnips.
+Assuming pay of $25/hr, this saves $105 000/year! 
+
+All in all, not a bad investment for 12 hours of my life.
 
 Also - since it's on Slack, I guess you can call this responsive design?
 
